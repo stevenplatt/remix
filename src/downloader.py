@@ -28,12 +28,19 @@ def trim_audio(file_path, start_time, end_time, output_path):
     trimmed_audio = audio[start_time * 1000:end_time * 1000]  # times are in milliseconds
     trimmed_audio.export(output_path, format='mp3')
 
-def combine_audios(audio_files, output_file='combined_audio.mp3'):
+def combine_audios(audio_files, output_file='combined_audio.mp3', crossfade_duration=5000):
     combined = AudioSegment.empty()
-    for audio_file in audio_files:
+    
+    for index, audio_file in enumerate(audio_files):
         print(f"Adding {audio_file}...")
         audio = AudioSegment.from_mp3(audio_file)
-        combined += audio
+        
+        if index > 0:
+            # Apply crossfade
+            print(f"Applying {crossfade_duration / 1000} seconds crossfade...")
+            combined = combined.append(audio, crossfade=crossfade_duration)
+        else:
+            combined += audio
     
     print(f"Saving combined audio to {output_file}...")
     combined.export(output_file, format='mp3')
@@ -48,7 +55,7 @@ def main(youtube_urls_time_ranges, output_folder='downloads', output_file='combi
         trimmed_files.append(trimmed_path)
         os.remove(full_audio_path)  # Optionally remove the full audio file
 
-    # Combine trimmed audio files
+    # Combine trimmed audio files with crossfade
     destination = os.path.join(output_folder, output_file)
     combine_audios(trimmed_files, destination)
     
